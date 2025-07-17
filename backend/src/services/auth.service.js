@@ -88,15 +88,19 @@ export const registerUserService = async (body) => {
     session.startTransaction();
 
     const existingUser = await UserModel.findOne({ email }).session(session);
+    console.log(existingUser);
+
     if (existingUser) {
       throw new BadRequestException("Email already exists");
     }
 
+    
     const user = new UserModel({
       email,
       name,
       password,
     });
+
     await user.save({ session });
 
     const account = new AccountModel({
@@ -145,7 +149,8 @@ export const registerUserService = async (body) => {
     await session.abortTransaction();
     session.endSession();
 
-    throw error;
+    console.error("Error during registration:", error);
+    throw new NotFoundException("can't register you");
   }
 };
 
@@ -154,7 +159,9 @@ export const verifyUserService = async ({
   password,
   provider = ProviderEnum.EMAIL,
 }) => {
+  
   const account = await AccountModel.findOne({ provider, providerId: email });
+  
   if (!account) {
     throw new NotFoundException("Invalid email or password");
   }
